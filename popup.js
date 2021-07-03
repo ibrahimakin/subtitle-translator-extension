@@ -37,7 +37,7 @@ function createElements() {
   }
   function createButton(parent, text, listener) {
     let btn = document.createElement('button');    // Create a <button> element
-    btn.style = 'border-radius:5px;cursor:pointer';
+    btn.style = 'padding:5px;cursor:pointer;border-radius:5px;border-style:outset;border-width:1px';
     btn.innerHTML = text;                          // Insert text
     parent.appendChild(btn);                       // Append <button> to <body>
     btn.addEventListener('click', listener);
@@ -46,9 +46,9 @@ function createElements() {
   if (document.getElementById(divId)) { return; }
   let parent = document.createElement('div');      // Create a <div> element
   parent.id = divId;
-  parent.style = 'position:fixed;bottom:20px;right:20px;z-index:1';
+  parent.style = 'position:fixed;bottom:80px;right:40px;font-size:15px;z-index:1';
   createButton(parent, 'Translate', openTranslate);
-  document.body.appendChild(parent);
+  document.getElementsByTagName('video')[0].parentElement.appendChild(parent);
 }
 
 async function init() {
