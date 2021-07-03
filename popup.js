@@ -31,9 +31,8 @@ function createElements() {
   function openTranslate() {
     chrome.storage.sync.get('selector', ({ selector }) => {
       const element = document.querySelector(selector);
-      const copyText = element.children[0].innerHTML.replace(/(\r\n|\n|\r)/gm, ' ');
-      console.log(copyText);
-      window.open('https://translate.google.com/?sl=en&tl=tr&text=' + escape(copyText), '_blank');
+      const text = element.children[0].innerText.replace(/(\r\n|\n|\r)/gm, ' ');
+      chrome.runtime.sendMessage({ message: 'translate', text });
     });
   }
   function createButton(parent, text, listener) {
