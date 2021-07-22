@@ -1,3 +1,7 @@
+body {
+    text-align: center;
+}
+
 .switch {
     position: relative;
     display: inline-block;
@@ -56,4 +60,21 @@ input:checked + .slider:before {
   
 .slider.round:before {
     border-radius: 50%;
+}
+
+#videos {
+    margin-top: 5px;
+    white-space: nowrap;
+}
+
+#videos button {
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    border-width: 1px;
+    font-weight: bold;
+}
+
+#videos button:not(:last-child) {
+    margin-right: 5px;
 }
