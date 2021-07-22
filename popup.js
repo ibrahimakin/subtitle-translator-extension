@@ -1,33 +1,34 @@
-// Initialize butotn with users's prefered color
-let changeColor = document.getElementById('changeColor');
+let activate = document.getElementById('activate');
 
-chrome.storage.sync.get('color', ({ color }) => {
-  changeColor.style.backgroundColor = color;
-});
-
-// When the button is clicked, inject setPageBackgroundColor into current page
-changeColor.addEventListener('click', async () => {
+activate.addEventListener('change', async (e) => {
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    function: setPageBackgroundColor,
-  });
+  if (e.target.checked) { 
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: createElements
+    });
+  }
+  else {
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: removeElements
+    });
+  }
 });
 
-// The body of this function will be execuetd as a content script inside the
-// current page
-function setPageBackgroundColor() {
-  let element;
-  chrome.storage.sync.get('selector', ({ selector }) => {
-    element = document.querySelector(selector).children[0];
-  });
-  chrome.storage.sync.get('color', ({ color }) => {
-    element.style.backgroundColor = color;
-  });
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg.active) { activate.checked = true; }
+});
+
+// The body of this function will be execuetd as a content script inside the current page
+function removeElements() {
+  const element = document.getElementById('translate-extension-div-ia');
+  if (element) { element.remove(); }
 }
 
 function createElements() {
+  const divId = 'translate-extension-div-ia';
+  if (document.getElementById(divId)) { return; }
   function openTranslate() {
     chrome.storage.sync.get('selector', ({ selector }) => {
       const element = document.querySelector(selector);
@@ -42,8 +43,6 @@ function createElements() {
     parent.appendChild(btn);                       // Append <button> to <body>
     btn.addEventListener('click', listener);
   }
-  const divId = 'translate-extension-div-ia';
-  if (document.getElementById(divId)) { return; }
   let parent = document.createElement('div');      // Create a <div> element
   parent.id = divId;
   parent.style = 'position:fixed;bottom:80px;right:40px;font-size:15px;z-index:1';
@@ -51,12 +50,14 @@ function createElements() {
   document.getElementsByTagName('video')[0].parentElement.appendChild(parent);
 }
 
-async function init() {
+(async function () {
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    function: createElements,
+    function: () => {
+      if (document.getElementById('translate-extension-div-ia')) {
+        chrome.runtime.sendMessage({ active: true });
+      }
+    }
   });
-}
-
-init();
+})();
