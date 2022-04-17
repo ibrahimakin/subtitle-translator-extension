@@ -1,0 +1,32 @@
+#mouseover_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    background-color: rgba(0, 100, 255, .3);
+    z-index: 99999999999999;
+    pointer-events: none;
+    transition: .2s;
+}
+#translate-extension-div-ia {
+    position: fixed;
+    font-size: 15px;
+    bottom: 80px;
+    right: 40px;
+    z-index: 1;
+}
+#translate-extension-div-ia > button {
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    border-style: outset;
+    border-width: 1px;
+}
+#translate-extension-translation-div-ia {
+    position: absolute;
+    text-align: right;
+    width: 500px;
+    bottom: 50px;
+    right: 0;
+}
