@@ -1,7 +1,9 @@
 body {
     text-align: center;
 }
-
+label, input {
+    cursor: pointer;
+}
 .switch {
     position: relative;
     display: inline-block;
@@ -17,7 +19,6 @@ body {
   
 .slider {
     position: absolute;
-    cursor: pointer;
     top: 0;
     left: 0;
     right: 0;
@@ -77,4 +78,13 @@ input:checked + .slider:before {
 
 #videos button:not(:last-child) {
     margin-right: 5px;
+}
+
+#select {
+    margin-top: 10px;
+}
+
+#select + span {
+    font-size: 14px;
+    vertical-align: text-bottom;
 }

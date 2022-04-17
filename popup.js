@@ -1,8 +1,10 @@
 let activate = document.getElementById('activate');
+let select = document.getElementById('select');
+// let finder = document.getElementById('finder');
 
-activate.addEventListener('change', async (e) => {
+activate.addEventListener('change', async e => {
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (e.target.checked) { 
+  if (e.target.checked) {
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
       function: createElements
@@ -16,8 +18,27 @@ activate.addEventListener('change', async (e) => {
   }
 });
 
+select.addEventListener('change', e => chrome.storage.sync.set({ select: e.target.checked }));
+
+// finder.addEventListener('change', async (e) => {
+//   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+//   if (e.target.checked) { 
+//     chrome.scripting.executeScript({
+//       target: { tabId: tab.id },
+//       function: createOverlay
+//     });
+//   }
+//   else {
+//     chrome.scripting.executeScript({
+//       target: { tabId: tab.id },
+//       function: removeOverlay
+//     });
+//   }
+// });
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === 'active') { activate.checked = true; }
+  else if (request.message === 'select') { select.checked = true; }
   else if (request.message === 'videos') {
     const videos = document.getElementById('videos');
     if (request.data === 0) {
@@ -37,7 +58,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       parent.appendChild(upbtn);
       parent.appendChild(downbtn);
       videos.appendChild(parent);
-      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
         btn.addEventListener('click', () => {
           chrome.tabs.sendMessage(tabs[0].id, { message: 'video', data: i });
         });
@@ -59,27 +80,63 @@ function removeElements() {
 }
 
 function createElements() {
-  const divId = 'translate-extension-div-ia';
-  if (document.getElementById(divId)) { return; }
+  const divID = 'translate-extension-div-ia';
+  let parent = document.getElementById(divID);
+  if (parent) { return; }
   function openTranslate() {
     chrome.storage.sync.get('selector', ({ selector }) => {
       const element = document.querySelector(selector);
       const text = element.children[0].innerText.replace(/(\r\n|\n|\r)/gm, ' ');
-      chrome.runtime.sendMessage({ message: 'translate', text });
+      chrome.storage.sync.get('select', ({ select }) => {
+        if (select) {
+          fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=bd&dt=t&dj=1&q=' + escape(text))
+            .then(res => res.json()).then(data => {
+              let translation = '';
+              for (const sentence of data.sentences) translation += sentence.trans;
+              createTranslation(translation);
+            });
+        } else {
+          chrome.runtime.sendMessage({ message: 'translate', text });
+        }
+      });
     });
   }
-  function createButton(parent, text, listener) {
-    let btn = document.createElement('button');    // Create a <button> element
-    btn.style = 'padding:5px;cursor:pointer;border-radius:5px;border-style:outset;border-width:1px';
-    btn.innerHTML = text;                          // Insert text
-    parent.appendChild(btn);                       // Append <button> to <div>
-    btn.addEventListener('click', listener);
+  function createTranslation(translation) {
+    const id = 'translate-extension-translation-div-ia';
+    let div = document.getElementById(id);
+    if (div) div.innerHTML = translation;
+    else {
+      div = document.createElement('div');
+      div.addEventListener('click', e => e.target.remove());
+      div.innerText = translation;
+      div.id = id;
+      parent.appendChild(div);
+    }
   }
-  let parent = document.createElement('div');      // Create a <div> element
-  parent.id = divId;
-  parent.style = 'position:fixed;bottom:80px;right:40px;font-size:15px;z-index:1';
-  createButton(parent, 'Translate', openTranslate);
+  parent = document.createElement('div');        // Create a <div> element
+  let btn = document.createElement('button');    // Create a <button> element
+  btn.addEventListener('click', openTranslate);
+  btn.innerHTML = 'Translate';                   // Insert text
+  parent.appendChild(btn);                       // Append <button> to <div>
+  parent.id = divID;
   document.getElementsByTagName('video')[0].parentElement.appendChild(parent);
+}
+
+function removeOverlay() { }
+
+function createOverlay() {
+  let div = document.createElement('div');
+  div.setAttribute('id', 'mouseover_overlay');
+  document.body.appendChild(div);
+  let overlay = document.querySelector('#mouseover_overlay');
+  document.addEventListener('mouseover', e => {
+    let elem = e.target;
+    let rect = elem.getBoundingClientRect();
+    overlay.style.top = rect.top + 'px';
+    overlay.style.left = rect.left + 'px';
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+  });
 }
 
 (async function () {
@@ -87,13 +144,16 @@ function createElements() {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     function: () => {
-      const divId = 'translate-extension-div-ia';
-      if (document.getElementById(divId)) { chrome.runtime.sendMessage({ message: 'active' }); }
+      const divID = 'translate-extension-div-ia';
+      if (document.getElementById(divID)) { chrome.runtime.sendMessage({ message: 'active' }); }
+      chrome.storage.sync.get('select', ({ select }) => {
+        if (select) chrome.runtime.sendMessage({ message: 'select' });
+      });
       const elements = document.getElementsByTagName('video');
       for (let i = 0; i < elements.length; i++) { elements[i].dataset.translateExtension = i; }
       chrome.runtime.sendMessage({ message: 'videos', data: elements.length });
       chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        const element = document.getElementById(divId);
+        const element = document.getElementById(divID);
         if (element && (request.message === 'video' || request.message === 'down')) {
           document.querySelector(`[data-translate-extension="${request.data}"]`).parentElement.appendChild(element);
         }
