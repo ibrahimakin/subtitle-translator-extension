@@ -26,6 +26,7 @@
 #translate-extension-translation-div-ia {
     position: absolute;
     text-align: right;
+    text-shadow: 1px 1px 3px #000;
     width: 500px;
     bottom: 50px;
     right: 0;

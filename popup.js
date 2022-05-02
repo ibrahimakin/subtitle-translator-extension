@@ -95,9 +95,8 @@ function createElements() {
               for (const sentence of data.sentences) translation += sentence.trans;
               createTranslation(translation);
             });
-        } else {
-          chrome.runtime.sendMessage({ message: 'translate', text });
         }
+        chrome.runtime.sendMessage({ message: 'translate', text });
       });
     });
   }
