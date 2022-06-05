@@ -76,27 +76,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // The body of this function will be executed as a content script inside the current page
 function removeElements() {
   const element = document.getElementById('translate-extension-div-ia');
-  if (element) { element.remove(); }
+  if (element) element.remove();
 }
 
 function createElements() {
   const divID = 'translate-extension-div-ia';
   let parent = document.getElementById(divID);
-  if (parent) { return; }
-  function openTranslate() {
+  let previous = '';
+  if (parent) return;
+  function openTranslate(e, plus) {
     chrome.storage.sync.get('selector', ({ selector }) => {
       const element = document.querySelector(selector);
       const text = element.children[0].innerText.replace(/(\r\n|\n|\r)/gm, ' ');
+      if (plus) previous += text;
+      else previous = text;
       chrome.storage.sync.get('select', ({ select }) => {
         if (select) {
-          fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=bd&dt=t&dj=1&q=' + escape(text))
+          fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=tr&dt=bd&dt=t&dj=1&q=' + previous)
             .then(res => res.json()).then(data => {
               let translation = '';
               for (const sentence of data.sentences) translation += sentence.trans;
               createTranslation(translation);
             });
         }
-        chrome.runtime.sendMessage({ message: 'translate', text });
+        chrome.runtime.sendMessage({ message: 'translate', text: previous });
       });
     });
   }
@@ -114,9 +117,13 @@ function createElements() {
   }
   parent = document.createElement('div');        // Create a <div> element
   let btn = document.createElement('button');    // Create a <button> element
+  let add = document.createElement('button');
   btn.addEventListener('click', openTranslate);
+  add.addEventListener('click', e => openTranslate(e, true));
   btn.innerHTML = 'Translate';                   // Insert text
+  add.innerHTML = '+';
   parent.appendChild(btn);                       // Append <button> to <div>
+  parent.appendChild(add);
   parent.id = divID;
   document.getElementsByTagName('video')[0].parentElement.appendChild(parent);
 }
